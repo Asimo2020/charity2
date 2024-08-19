@@ -115,4 +115,18 @@ class TaskResponse(APIView):
 
 
 class DoneTask(APIView):
-    pass
+    permission_classes = [IsCharity]  
+
+    def post(self, request, task_id):  
+        try:  
+            task = Task.objects.get(id=task_id)  
+        except Task.DoesNotExist:  
+            return Response({'detail': 'Task not found.'}, status=status.HTTP_404_NOT_FOUND)  
+
+        if task.state != 'ASSIGNED':  
+            return Response({'detail': 'Task is not assigned yet.'}, status=status.HTTP_404_NOT_FOUND)  
+
+        task.state = 'DONE'  
+        task.save()  
+
+        return Response({'detail': 'Task has been done successfully.'}, status=status.HTTP_200_OK)  
