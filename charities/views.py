@@ -67,8 +67,23 @@ class Tasks(generics.ListCreateAPIView):
         return queryset.filter(**filter_lookups).exclude(**exclude_lookups)
 
 
-class TaskRequest(APIView):
-    pass
+class TaskRequest(APIView):  
+    permission_classes = [IsBenefactor]  
+
+    def get(self, request, task_id):  
+        try:  
+            task = Task.objects.get(id=task_id)  
+        except Task.DoesNotExist:  
+            return Response({'detail': 'Task not found.'}, status=status.HTTP_404_NOT_FOUND)  
+
+        if task.state != 'PENDING':  
+            return Response({'detail': 'This task is not pending.'}, status=status.HTTP_404_NOT_FOUND)  
+
+        task.state = 'WAITING'  
+        task.save()  
+        task.assign_to_user(request.user)  
+
+        return Response({'detail': 'Request sent.'}, status=status.HTTP_200_OK)
 
 
 class TaskResponse(APIView):
